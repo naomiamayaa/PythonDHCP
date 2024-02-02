@@ -1,7 +1,12 @@
 import socket
 import threading
 
-# Function to handle a client
+available = {"1.1.1.1", "2.2.2.2", "3.3.3.3"}
+unavailable = set()
+
+# Flag to signal the server to stop
+server_stopped = False
+
 def handle_client(client_socket):
     # Send a welcome message to the client
     client_socket.send("Welcome to the server!".encode())
@@ -13,12 +18,42 @@ def handle_client(client_socket):
             break
         print(f"Client says: {data}")
 
-        # Send a response to the client
-        response = input("Enter your response: ")  # Get response from the server user
-        client_socket.send(response.encode())
+        # Check if the client wants to end the connection
+        if data.lower() == "end":
+            print("Client requested to end the connection.")
+            break
+
+        # Process client's request based on the provided logic
+        x = data.split()
+
+        if x[0].upper() == "ASK" and len(available) > 0:
+            offered = available.pop()
+            print(f"Offer {offered}")
+            unavailable.add(offered)
+
+        if len(x) > 1 and x[0].upper() == "RENEW" and x[1] in unavailable:
+            print(f"RENEWED for {x[1]}")
+
+        if len(x) > 1 and x[0].upper() == "RELEASE" and x[1] in unavailable:
+            print(f"RELEASED for {x[1]}")
+            unavailable.remove(x[1])
+            available.add(x[1])
+
+        if len(x) > 1 and x[0].upper() == "STATUS":
+            if x[1] in available:
+                print(f"{x[1]} AVAILABLE")
+            elif x[1] in unavailable:
+                print(f"{x[1]} ASSIGNED")
+            else:
+                print("Invalid.")
 
     # Close the connection with the client
     client_socket.close()
+
+def stop_server():
+    global server_stopped
+    server_stopped = True
+    server_socket.close()
 
 # Create a socket object
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,17 +68,15 @@ server_socket.listen()
 
 print(f"Server listening on {host}:{port}")
 
-# List to store client sockets
-clients = []
+# Create a new thread to listen for the "end" command and stop the server
+stop_thread = threading.Thread(target=lambda: input("Type 'end' to stop the server: ") if not server_stopped else None)
+stop_thread.start()
 
 # Infinite loop to accept connections from clients
-while True:
+while not server_stopped:
     # Accept a connection from a client
     client_socket, client_address = server_socket.accept()
     print(f"Connection from {client_address}")
-
-    # Add the new client socket to the list
-    clients.append(client_socket)
 
     # Create a new thread to handle the client
     client_handler = threading.Thread(target=handle_client, args=(client_socket,))
