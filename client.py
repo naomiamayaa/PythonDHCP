@@ -10,7 +10,7 @@ def receive_messages(client_socket):
 
 def send_messages(client_socket):
     while True:
-        user_input = input("Enter your message: \n")
+        user_input = input("Enter your message: ")
         client_socket.send(user_input.encode())
         if user_input.lower() == 'exit':
             break

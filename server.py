@@ -4,13 +4,9 @@ import threading
 available = {"1.1.1.1", "2.2.2.2", "3.3.3.3"}
 unavailable = set()
 
-# Flag to signal the server to stop
-server_stopped = False
+server_stopped = False # Flag to signal the server to stop
 
 def handle_client(client_socket):
-    # Send a welcome message to the client
-    client_socket.send("Welcome to the server!".encode())
-
     while True:
         # Receive data from the client
         data = client_socket.recv(1024).decode()
@@ -69,7 +65,7 @@ server_socket.listen()
 print(f"Server listening on {host}:{port}")
 
 # Create a new thread to listen for the "end" command and stop the server
-stop_thread = threading.Thread(target=lambda: input("Type 'end' to stop the server: ") if not server_stopped else None)
+stop_thread = threading.Thread(target=lambda: input("*Type 'end' in client to stop the server*") if not server_stopped else None)
 stop_thread.start()
 
 # Infinite loop to accept connections from clients
